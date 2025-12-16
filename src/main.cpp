@@ -2136,12 +2136,11 @@ void askForInternetPermission()
 
     MessageDialog *dialog =
     new MessageDialog(_("SuperTuxKart may connect to a server "
-        "to download add-ons and notify you of updates. "
-        "Please read our privacy policy at https://supertuxkart.net/Privacy. "
-        "Would you like this feature to be enabled? (To change this setting "
+        "to download add-ons and notify you of updates.") + L"\n\n"
+        + _("Please read our privacy policy at %s.", "https://supertuxkart.net/Privacy")
+        + L"\n\n" + _("Would you like this feature to be enabled? (To change this setting "
         "at a later time, go to options, select tab "
-        "'General', and edit \"Connect to the "
-        "Internet\")."),
+        "'General', and edit \"Connect to the Internet\")."),
         MessageDialog::MESSAGE_DIALOG_YESNO,
         new ConfirmServer(), true, true, 0.85f, 0.85f);
 
@@ -2373,7 +2372,7 @@ int main(int argc, char *argv[])
         wiimote_manager = new WiimoteManager();
 #endif
 
-        GUIEngine::reserveLoadingIcons(4);
+        GUIEngine::reserveLoadingIcons(1);
         int parent_pid;
         bool has_parent_process = false;
         if (CommandLine::has("--parent-process", &parent_pid))
@@ -2383,19 +2382,11 @@ int main(int argc, char *argv[])
         }
         else
             main_loop = new MainLoop(0/*parent_pid*/);
-        material_manager->loadMaterial();
 
-        // Preload the explosion effects (explode.png)
-        ParticleKindManager::get()->getParticles("explosion.xml");
-        ParticleKindManager::get()->getParticles("explosion_bomb.xml");
-        ParticleKindManager::get()->getParticles("explosion_cake.xml");
-        ParticleKindManager::get()->getParticles("jump_explosion.xml");
+        // Set of loading steps common between the first game launch and
+        // reloading to apply a new resolution.
+        irr_driver->commonInit();
 
-        GUIEngine::addLoadingIcon( irr_driver->getTexture(FileManager::GUI_ICON,
-                                                          "options_video.png"));
-        kart_properties_manager -> loadAllKarts    ();
-        kart_properties_manager->onDemandLoadKartTextures(
-            { UserConfigParams::m_default_kart }, false/*unload_unused*/);
         OfficialKarts::load();
         handleXmasMode();
         handleEasterEarMode();
@@ -2413,35 +2404,6 @@ int main(int argc, char *argv[])
 
         GUIEngine::addLoadingIcon( irr_driver->getTexture(FileManager::GUI_ICON,
                                                           "gui_lock.png"  ) );
-        ProjectileManager::get()->loadData();
-
-        // Both item_manager and powerup_manager load models and therefore
-        // textures from the model directory. To avoid reading the
-        // materials.xml twice, we do this here once for both:
-        file_manager->pushTextureSearchPath(file_manager->getAsset(FileManager::MODEL,""), "models");
-        const std::string materials_file =
-            file_manager->getAsset(FileManager::MODEL,"materials.xml");
-        if(materials_file!="")
-        {
-            // Some of the materials might be needed later, so just add
-            // them all permanently (i.e. as shared). Adding them temporary
-            // will actually not be possible: powerup_manager adds some
-            // permanent icon materials, which would (with the current
-            // implementation) make the temporary materials permanent anyway.
-            material_manager->addSharedMaterial(materials_file);
-        }
-        Referee::init();
-        powerup_manager->loadPowerupsModels();
-        ItemManager::loadDefaultItemMeshes();
-
-        GUIEngine::addLoadingIcon( irr_driver->getTexture(FileManager::GUI_ICON,
-                                                          "gift.png")       );
-
-        attachment_manager->loadModels();
-        file_manager->popTextureSearchPath();
-
-        GUIEngine::addLoadingIcon( irr_driver->getTexture(FileManager::GUI_ICON,
-                                                          "banana.png")    );
 
         //handleCmdLine() needs InitTuxkart() so it can't be called first
         if (!handleCmdLine(!server_config.empty(), has_parent_process))
