@@ -70,11 +70,16 @@ private:
     // TV spectator cameras defined by track designer (soccer). Always follow ball.
     static std::vector<Vec3> m_tv_cameras;
 
-    // TV camera state
+    // TV camera selection smoothing
     int   m_tv_current_index = -1;
-    // Activation sphere radius per TV camera, stored squared; 0 disables activation radius.
-    static std::vector<float> m_tv_radius;       // per-camera squared radius
-    static float m_tv_default_radius;            // default squared radius from root
+    float m_tv_switch_cooldown = 0.0f; // seconds remaining before next switch
+    static float m_tv_min_delta2;       // required improvement (squared distance) to switch
+    static float m_tv_cooldown_default; // default cooldown after a switch (seconds)
+
+    // Delayed switch mechanism
+    int   m_tv_pending_index = -1;     // camera index waiting to switch to (-1 = none)
+    float m_tv_pending_timer = 0.0f;   // time conditions have been met for pending switch
+    static float m_tv_switch_delay;    // delay before switching (seconds)
 
     // Give a few classes access to the constructor (mostly for inheritance)
     friend class Camera;
