@@ -141,7 +141,7 @@ void Physics::addKart(const AbstractKart *kart)
             return;
     }
     m_dynamics_world->addRigidBody(kart->getBody());
-    m_dynamics_world->addVehicle(kart->getVehicle());
+    m_dynamics_world->addAction(kart->getVehicle());
 }   // addKart
 
 //-----------------------------------------------------------------------------
@@ -168,7 +168,7 @@ void Physics::removeKart(const AbstractKart *kart)
     else
     {
         m_dynamics_world->removeRigidBody(kart->getBody());
-        m_dynamics_world->removeVehicle(kart->getVehicle());
+        m_dynamics_world->removeAction(kart->getVehicle());
     }
 }   // removeKart
 
@@ -176,9 +176,9 @@ void Physics::removeKart(const AbstractKart *kart)
 /** Updates the physics simulation and handles all collisions.
  *  \param ticks Number of physics steps to simulate.
  */
-void Physics::update(int ticks)
+void Physics::update()
 {
-    PROFILER_PUSH_CPU_MARKER("Physics", 0, 0, 0);
+    PROFILER_PUSH_CPU_MARKER("-- Physics - step simulation", 0, 0, 0);
 
     m_physics_loop_active = true;
     // Bullet can report the same collision more than once (up to 4
@@ -204,6 +204,9 @@ void Physics::update(int ticks)
                      World::getWorld()->getTicksSinceStart(),
                      StkTime::getRealTime() - start);
     }
+
+    PROFILER_POP_CPU_MARKER();
+    PROFILER_PUSH_CPU_MARKER("-- Physics - collision handling", 0, 0, 0);
 
     // Now handle the actual collision. Note: flyables can not be removed
     // inside of this loop, since the same flyables might hit more than one
